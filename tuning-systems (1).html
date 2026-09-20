@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tuning systems compared</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F1F4F1; --panel: #FBFCFB; --ink: #15252D; --muted: #586A72; --line: #D3DBD7;
+  --sel: rgba(21, 37, 45, .07);
+  --pyth: #A8650F; --just: #1D67A8; --mean: #B02C62; --equal: #15252D; --accent: #1D67A8;
+  --serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1A21; --panel: #14242D; --ink: #E7EEF0; --muted: #8CA0A8; --line: #253A44;
+    --sel: rgba(231, 238, 240, .08);
+    --pyth: #E8B04B; --just: #6DB6F0; --mean: #F08AB0; --equal: #E7EEF0; --accent: #6DB6F0;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1A21; --panel: #14242D; --ink: #E7EEF0; --muted: #8CA0A8; --line: #253A44;
+  --sel: rgba(231, 238, 240, .08);
+  --pyth: #E8B04B; --just: #6DB6F0; --mean: #F08AB0; --equal: #E7EEF0; --accent: #6DB6F0;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); background: var(--bg); }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.55 var(--sans); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: clamp(1.25rem, 4vw, 3rem); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+h1 { font: 500 clamp(2.4rem, 6vw, 4.2rem)/1.05 var(--serif); letter-spacing: -.01em; margin: 0; max-width: 14ch; }
+h2 { font: 500 1.75rem/1.2 var(--serif); margin: 0 0 .5rem; }
+h3 { font: 500 1.25rem/1.2 var(--serif); margin: 0; }
+p { margin: 0; }
+.lead { color: var(--muted); font-size: 1.125rem; max-width: 60ch; margin-top: 1.25rem; }
+.note { color: var(--muted); max-width: 66ch; }
+section { margin-top: 4.5rem; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-top: 2rem; align-items: flex-end; }
+.controls label { display: flex; flex-direction: column; gap: .3rem; color: var(--muted); font-size: .875rem; }
+input, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: .5rem .7rem; min-width: 8rem; }
+
+.legend { display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; margin: 1rem 0; font-size: .9rem; }
+.legend span { display: inline-flex; align-items: center; gap: .45rem; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: .5rem; vertical-align: baseline; }
+.legend .dot { margin: 0; }
+.legend .bar { display: inline-block; width: 18px; height: 2px; background: var(--equal); }
+
+.chartbox { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow: hidden; }
+.chartscroll { overflow-x: auto; }
+#chart { display: block; width: 100%; min-width: 640px; height: auto; }
+#chart text { font: 12px var(--sans); fill: var(--muted); }
+#chart text.xl { font-size: 13px; font-weight: 500; fill: var(--ink); }
+#chart .col { cursor: pointer; outline: none; }
+#chart .col:focus-visible rect { stroke: var(--accent); stroke-width: 2; }
+#detail { border-top: 1px solid var(--line); padding: 1.25rem 1.25rem 1rem; }
+.dhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1rem; margin-bottom: .75rem; }
+.dhead p { color: var(--muted); flex: 1; }
+
+.scroll { overflow: auto; }
+.scroll.tall { max-height: 440px; border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: .55rem .8rem; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { color: var(--muted); font-weight: 500; position: sticky; top: 0; background: var(--bg); }
+#detail thead th { background: var(--panel); }
+tr.tonic td { font-weight: 600; background: var(--sel); }
+tr.playing td { background: var(--sel); }
+td.errcell { background: linear-gradient(to right, color-mix(in srgb, var(--accent) 26%, transparent) var(--w, 0%), transparent var(--w, 0%)); }
+.track { position: relative; width: 140px; height: 8px; background: var(--line); border-radius: 4px; margin-left: auto; }
+.track i { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 4px; }
+.track::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--ink); }
+
+.kbwrap { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow: hidden; }
+.kbscroll { overflow-x: auto; padding: 1rem 1rem .5rem; }
+.kb { position: relative; height: 190px; user-select: none; -webkit-user-select: none; touch-action: pan-x; }
+.kb .w, .kb .b { position: absolute; top: 0; cursor: pointer; touch-action: pan-x; }
+.kb .w { height: 100%; width: 36px; background: #F6F7F3; border: 1px solid #1A2A32; border-radius: 0 0 5px 5px; color: #33454D; font: 500 11px var(--sans); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; }
+.kb .b { height: 62%; width: 22px; background: #1A2A32; border: 1px solid #1A2A32; border-radius: 0 0 4px 4px; z-index: 2; }
+.kb .w.tonic { background: #DCE9F5; }
+.kb .b.tonic { background: #2E5273; }
+.kb .w.down { background: #9CC4EA; }
+.kb .b.down { background: #3F7DB5; }
+#kbInfo { padding: .75rem 1.25rem 1rem; color: var(--muted); border-top: 1px solid var(--line); min-height: 3rem; font-variant-numeric: tabular-nums; }
+#kbInfo strong { color: var(--ink); font-weight: 600; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { padding: .5rem 1rem; background: transparent; border: 0; color: var(--muted); font: inherit; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.seg button:disabled { opacity: .4; cursor: default; }
+.toolbar { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; margin: 1rem 0; align-items: center; }
+.btn { border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 6px; padding: .35rem .9rem; font: inherit; cursor: pointer; }
+.btn:hover { background: var(--sel); }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+footer { margin-top: 5rem; padding-top: 1.5rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; }
+footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Four ways to divide the octave</h1>
+    <p class="lead">Pythagorean, just intonation, quarter-comma meantone and equal temperament, compared interval by interval. Choose an interval to hear it in each tuning.</p>
+    <div class="controls">
+      <label>Reference pitch A4 (Hz)
+        <input id="a4" type="number" min="380" max="500" step="0.5" value="444">
+      </label>
+      <label>Key
+        <select id="key"></select>
+      </label>
+    </div>
+  </header>
+
+  <section>
+    <h2>How far each tuning drifts from equal temperament</h2>
+    <p class="note">Measured in cents, where one cent is a hundredth of an equal-tempered semitone. The dark line at zero is equal temperament.</p>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--pyth)"></i>Pythagorean</span>
+      <span><i class="dot" style="background:var(--just)"></i>Just</span>
+      <span><i class="dot" style="background:var(--mean)"></i>Meantone</span>
+      <span><i class="bar"></i>Equal temperament</span>
+    </div>
+    <div class="chartbox">
+      <div class="chartscroll"><svg id="chart" viewBox="0 0 760 360" role="group" aria-label="Cents error of each tuning by interval"></svg></div>
+      <div id="detail"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Play any pitch</h2>
+    <p class="note">Press and hold a key to sound it in the chosen tuning, built from the tonic of your key. Tinted keys are the tonic. On a computer keyboard, A is C4 and the keys from A to K climb by semitone from there, with W, E, T, Y and U for the black keys. Press Z or X, or use the octave buttons, to move those keys down or up an octave. Scroll sideways for the full range, A0 to A8.</p>
+    <div class="toolbar">
+      <div class="seg" id="kbSeg"></div>
+      <div class="seg"><button type="button" id="octDown">Octave down</button><button type="button" id="octUp">Octave up</button></div>
+      <span id="octLabel" class="note"></span>
+    </div>
+    <div class="kbwrap">
+      <div class="kbscroll" id="kbscroll"><div class="kb" id="kb"></div></div>
+      <div id="kbInfo">Press a key to see its frequency.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>All intervals side by side</h2>
+    <p class="note">The same twelve intervals in every tuning, as ratios, decimals or cents of error against equal temperament.</p>
+    <div class="toolbar"><div class="seg" id="matrixSeg"></div></div>
+    <div class="scroll" id="matrix"></div>
+  </section>
+
+  <section>
+    <h2>Frequencies in Hz</h2>
+    <p class="note">Each tuning is built up from the tonic of the chosen key, then extended down and up across the range. Octave numbers change at A, as in the source spreadsheet.</p>
+    <div class="toolbar">
+      <div class="seg" id="sysSeg"></div>
+      <div class="seg" id="rangeSeg"></div>
+    </div>
+    <div class="scroll" id="freq"></div>
+  </section>
+
+  <section>
+    <h2>The harmonic series against the twelve semitones</h2>
+    <p class="note">Each harmonic is rounded to the nearest semitone. The error shows how far the true overtone sits from that note, up to half a semitone either way.</p>
+    <div class="toolbar"><div class="seg" id="harmSeg"></div></div>
+    <div class="scroll tall" id="harm"></div>
+  </section>
+
+  <footer>
+    <a href="https://onlinetonegenerator.com/multiple-tone-generator.html" target="_blank" rel="noopener">Play frequencies in a tone generator</a>
+    <a href="https://youtu.be/nK2jYk37Rlg" target="_blank" rel="noopener">Summary video</a>
+  </footer>
+</div>
+
+<script>
+const PN = ["A","Bb","B","C","C#","D","Eb","E","F","F#","G","G#"];
+const IN = ["Unison","Minor 2nd","Major 2nd","Minor 3rd","Major 3rd","Perfect 4th","Tritone","Perfect 5th","Minor 6th","Major 6th","Minor 7th","Major 7th","Octave"];
+const IS = ["P1","m2","M2","m3","M3","P4","TT","P5","m6","M6","m7","M7","P8"];
+
+const PYf = [[1,1],[256,243],[9,8],[32,27],[81,64],[4,3],[729,512],[3,2],[128,81],[27,16],[16,9],[243,128],[2,1]];
+const JUf = [[1,1],[16,15],[9,8],[6,5],[5,4],[4,3],[7,5],[3,2],[8,5],[5,3],[16,9],[15,8],[2,1]];
+const frac = a => a.map(([n,d]) => n / d);
+const fstr = a => a.map(([n,d]) => n + "/" + d);
+const MEr = [1, 5**(7/4)/16, Math.sqrt(5)/2, 4/5**(3/4), 5/4, 2/5**(1/4), 5**1.5/8, 5**0.25, 8/5, 5**0.75/2, 4/Math.sqrt(5), 5**1.25/4, 2];
+const MEs = ["1/1","5^(7/4) / 16","√5 / 2","4 / 5^(3/4)","5/4","2 / 5^(1/4)","5^(3/2) / 8","5^(1/4)","8/5","5^(3/4) / 2","4 / √5","5^(5/4) / 4","2/1"];
+const EQr = IN.map((_, i) => 2 ** (i / 12));
+const EQs = IN.map((_, i) => i === 0 ? "1/1" : i === 12 ? "2/1" : "2^(" + i + "/12)");
+
+const SYS = [
+  { id: "pyth",  name: "Pythagorean", r: frac(PYf), s: fstr(PYf), off: -11 },
+  { id: "just",  name: "Just",        r: frac(JUf), s: fstr(JUf), off: 0 },
+  { id: "mean",  name: "Meantone",    r: MEr,       s: MEs,       off: 11 },
+  { id: "equal", name: "Equal",       r: EQr,       s: EQs }
+];
+
+const S = { a4: 444, key: "Bb", sel: 4, tab: "ratio", sys: "pyth", range: "oct", harm: 32, kb: "just", oct: 0 };
+const $ = id => document.getElementById(id);
+
+const cents = r => 1200 * Math.log2(r);
+const err = (s, i) => cents(s.r[i]) - i * 100;
+function fc(x, d = 1) {
+  const v = Number(x.toFixed(d));
+  if (v === 0) return "0";
+  return (v > 0 ? "+" : "\u2212") + Math.abs(v).toFixed(d);
+}
+const tonic = () => S.a4 * 2 ** (PN.indexOf(S.key) / 12);
+
+/* ---------- Audio ---------- */
+let ctx = null, master = null, timers = [];
+function audio() {
+  ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state === "suspended") ctx.resume();
+  return ctx;
+}
+function newSession() {
+  const c = audio();
+  if (master) master.gain.setTargetAtTime(0, c.currentTime, 0.02);
+  timers.forEach(clearTimeout); timers = [];
+  document.querySelectorAll("tr.playing").forEach(r => r.classList.remove("playing"));
+  master = c.createGain();
+  master.connect(c.destination);
+  return c;
+}
+function tone(c, f, start, dur, gain) {
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = "triangle"; o.frequency.value = f;
+  g.gain.setValueAtTime(0, start);
+  g.gain.linearRampToValueAtTime(gain, start + 0.03);
+  g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+  o.connect(g); g.connect(master);
+  o.start(start); o.stop(start + dur + 0.05);
+}
+function playSystem(id) {
+  const s = SYS.find(x => x.id === id), t = tonic(), up = t * s.r[S.sel];
+  const c = newSession(), t0 = c.currentTime + 0.05;
+  tone(c, t, t0, 0.7, 0.2);
+  tone(c, up, t0 + 0.8, 0.7, 0.2);
+  tone(c, t, t0 + 1.6, 1.6, 0.14);
+  tone(c, up, t0 + 1.6, 1.6, 0.14);
+  highlight(id, 0, 3200);
+}
+function compareAll() {
+  const t = tonic(), c = newSession(), t0 = c.currentTime + 0.05;
+  SYS.forEach((s, n) => {
+    const start = t0 + n * 2;
+    tone(c, t, start, 1.6, 0.14);
+    tone(c, t * s.r[S.sel], start, 1.6, 0.14);
+    highlight(s.id, n * 2000, 1700);
+  });
+}
+function highlight(id, delay, len) {
+  timers.push(setTimeout(() => {
+    const row = document.querySelector(`#detail tr[data-sys="${id}"]`);
+    if (row) row.classList.add("playing");
+  }, delay));
+  timers.push(setTimeout(() => {
+    const row = document.querySelector(`#detail tr[data-sys="${id}"]`);
+    if (row) row.classList.remove("playing");
+  }, delay + len));
+}
+
+/* ---------- Chart ---------- */
+function renderChart() {
+  const W = 760, H = 360, L = 48, R = 14, T = 14, B = 56, ymin = -30, ymax = 20;
+  const cw = (W - L - R) / 11, k = PN.indexOf(S.key);
+  const y = v => T + (ymax - v) / (ymax - ymin) * (H - T - B);
+  let g = "";
+  for (let v = ymin; v <= ymax; v += 10) {
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/>`;
+    g += `<text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v > 0 ? "+" + v : v < 0 ? "\u2212" + Math.abs(v) : 0}</text>`;
+  }
+  g += `<text transform="rotate(-90)" x="${-(T + (H - T - B) / 2)}" y="12" text-anchor="middle">cents</text>`;
+  g += `<line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--equal)" stroke-width="2"/>`;
+  for (let i = 1; i <= 11; i++) {
+    const cx = L + (i - .5) * cw, on = S.sel === i;
+    g += `<g class="col" data-i="${i}" tabindex="0" role="button" aria-pressed="${on}" aria-label="${IN[i]}">`;
+    g += `<rect x="${cx - cw / 2}" y="${T}" width="${cw}" height="${H - T - B}" fill="${on ? "var(--sel)" : "transparent"}"/>`;
+    SYS.slice(0, 3).forEach(s => {
+      const e = err(s, i), x = cx + s.off;
+      g += `<line x1="${x}" x2="${x}" y1="${y(0)}" y2="${y(e)}" stroke="var(--${s.id})" stroke-width="2"/>`;
+      g += `<circle cx="${x}" cy="${y(e)}" r="5.5" fill="var(--${s.id})"><title>${s.name}: ${fc(e)} cents</title></circle>`;
+    });
+    g += `<text class="xl" x="${cx}" y="${H - B + 22}" text-anchor="middle">${IS[i]}</text>`;
+    g += `<text x="${cx}" y="${H - B + 40}" text-anchor="middle">${PN[(k + i) % 12]}</text>`;
+    g += `</g>`;
+  }
+  $("chart").innerHTML = g;
+}
+
+/* ---------- Detail panel ---------- */
+function renderDetail() {
+  const i = S.sel, k = PN.indexOf(S.key), t = tonic();
+  let h = `<div class="dhead"><h3>${IN[i]}</h3><p>${S.key} up to ${PN[(k + i) % 12]}</p><button class="btn primary" id="cmp" type="button">Compare all four</button></div>`;
+  h += `<div class="scroll"><table><thead><tr><th>Tuning</th><th>Ratio</th><th>Frequency (Hz)</th><th>Cents vs equal</th><th></th></tr></thead><tbody>`;
+  SYS.forEach(s => {
+    h += `<tr data-sys="${s.id}"><td><i class="dot" style="background:var(--${s.id})"></i>${s.name}</td><td>${s.s[i]}</td><td>${(t * s.r[i]).toFixed(2)}</td><td>${fc(err(s, i))}</td>`;
+    h += `<td><button class="btn play" type="button" data-sys="${s.id}" aria-label="Play ${s.name} ${IN[i].toLowerCase()}">Play</button></td></tr>`;
+  });
+  h += `</tbody></table></div>`;
+  $("detail").innerHTML = h;
+}
+
+/* ---------- Matrix ---------- */
+function renderMatrix() {
+  let h = `<table><thead><tr><th>Interval</th>${SYS.map(s => `<th style="color:var(--${s.id})">${s.name}</th>`).join("")}</tr></thead><tbody>`;
+  for (let i = 0; i <= 12; i++) {
+    h += `<tr><td>${IN[i]}</td>` + SYS.map(s => {
+      if (S.tab === "ratio") return `<td>${s.s[i]}</td>`;
+      if (S.tab === "dec") return `<td>${s.r[i].toFixed(6)}</td>`;
+      const e = err(s, i);
+      return `<td class="errcell" style="--w:${Math.min(Math.abs(e) / 30 * 100, 100)}%">${fc(e)}</td>`;
+    }).join("") + `</tr>`;
+  }
+  $("matrix").innerHTML = h + `</tbody></table>`;
+}
+
+/* ---------- Frequencies ---------- */
+function renderFreq() {
+  const s = SYS.find(x => x.id === S.sys), k = PN.indexOf(S.key), t = tonic();
+  const rows = [];
+  if (S.range === "oct") { for (let j = 0; j <= 12; j++) rows.push({ n: k + j, j }); }
+  else { for (let n = -48; n <= 48; n++) rows.push({ n, j: null }); }
+  let h = `<table><thead><tr><th>Pitch</th><th>Interval</th><th>Ratio</th><th>Equal (Hz)</th><th style="color:var(--${s.id})">${s.name} (Hz)</th><th>Difference (Hz)</th><th>Error (cents)</th></tr></thead><tbody>`;
+  rows.forEach(({ n, j }) => {
+    const d = ((n - k) % 12 + 12) % 12, o = Math.floor((n - k) / 12);
+    const idx = j === null ? d : j;
+    const fe = S.a4 * 2 ** (n / 12), fs = t * s.r[d] * 2 ** o;
+    const name = PN[((n % 12) + 12) % 12] + (Math.floor(n / 12) + 4);
+    h += `<tr class="${d === 0 ? "tonic" : ""}"><td>${name}</td><td>${IN[idx]}</td><td>${s.s[idx]}</td><td>${fe.toFixed(2)}</td><td>${fs.toFixed(2)}</td><td>${fc(fs - fe, 2)}</td><td>${fc(cents(fs / fe))}</td></tr>`;
+  });
+  const el = $("freq");
+  el.className = "scroll" + (S.range === "all" ? " tall" : "");
+  el.innerHTML = h + `</tbody></table>`;
+}
+
+/* ---------- Harmonics ---------- */
+function renderHarm() {
+  let h = `<table><thead><tr><th>Harmonic</th><th>Octaves</th><th>Semitones</th><th>Interval</th><th>Exact semitones</th><th>Rounded</th><th>Error (cents)</th><th></th></tr></thead><tbody>`;
+  for (let n = 1; n <= S.harm; n++) {
+    const ex = 12 * Math.log2(n), rd = Math.round(ex), oc = Math.floor(rd / 12), sm = rd % 12, e = (ex - rd) * 100;
+    const nm = sm === 0 ? (oc === 0 ? "Unison" : "Octave") : IN[sm];
+    const w = Math.min(Math.abs(e) / 50 * 50, 50), left = e < 0 ? 50 - w : 50;
+    h += `<tr><td>${n}</td><td>${oc}</td><td>${sm}</td><td>${nm}</td><td>${ex.toFixed(3)}</td><td>${rd}</td><td>${fc(e, 0)}</td><td><div class="track"><i style="left:${left}%;width:${w}%"></i></div></td></tr>`;
+  }
+  $("harm").innerHTML = h + `</tbody></table>`;
+}
+
+/* ---------- Keyboard ---------- */
+const BLACK = new Set(["Bb", "C#", "Eb", "F#", "G#"]);
+const KW = 36, KB = 22;
+const keyEls = {};
+let kbOut = null;
+const voices = {};
+
+const pitchName = n => PN[((n % 12) + 12) % 12] + (Math.floor(n / 12) + 4);
+function pitchFreq(s, n) {
+  const k = PN.indexOf(S.key), t = tonic();
+  const d = ((n - k) % 12 + 12) % 12, o = Math.floor((n - k) / 12);
+  return t * s.r[d] * 2 ** o;
+}
+function buildKeyboard() {
+  let whites = 0, html = "";
+  for (let n = -48; n <= 48; n++) {
+    const pc = PN[((n % 12) + 12) % 12];
+    if (BLACK.has(pc)) {
+      html += `<div class="b" data-n="${n}" role="button" aria-label="${pitchName(n)}" style="left:${whites * KW - KB / 2}px"></div>`;
+    } else {
+      html += `<div class="w" data-n="${n}" role="button" aria-label="${pitchName(n)}" style="left:${whites * KW}px">${pitchName(n)}</div>`;
+      whites++;
+    }
+  }
+  const kb = $("kb");
+  kb.style.width = whites * KW + 1 + "px";
+  kb.innerHTML = html;
+  kb.querySelectorAll("[data-n]").forEach(el => { keyEls[el.dataset.n] = el; });
+  markTonic();
+  $("kbscroll").scrollLeft = keyEls[0].offsetLeft - 120;
+}
+function markTonic() {
+  const k = PN.indexOf(S.key);
+  Object.keys(keyEls).forEach(n => keyEls[n].classList.toggle("tonic", (((+n) % 12) + 12) % 12 === k));
+}
+function showInfo(s, n, f) {
+  const k = PN.indexOf(S.key), d = ((n - k) % 12 + 12) % 12, fe = S.a4 * 2 ** (n / 12);
+  $("kbInfo").innerHTML = `<strong>${pitchName(n)}</strong> &nbsp;${d === 0 ? "Tonic" : IN[d]} &middot; ${s.name} &middot; ${f.toFixed(2)} Hz &middot; ${fc(cents(f / fe))} cents vs equal`;
+}
+function startVoice(id, n) {
+  if (voices[id] || !keyEls[n]) return;
+  const c = audio(), s = SYS.find(x => x.id === S.kb), f = pitchFreq(s, n);
+  if (!kbOut) { kbOut = c.createGain(); kbOut.connect(c.destination); }
+  const o = c.createOscillator(), g = c.createGain(), now = c.currentTime;
+  o.type = "triangle"; o.frequency.value = f;
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(0.22, now + 0.01);
+  g.gain.setTargetAtTime(0.1, now + 0.02, 1.2);
+  o.connect(g); g.connect(kbOut); o.start(now);
+  voices[id] = { n, o, g };
+  keyEls[n].classList.add("down");
+  showInfo(s, n, f);
+}
+function stopVoice(id) {
+  const v = voices[id]; if (!v) return;
+  delete voices[id];
+  const now = ctx.currentTime;
+  v.g.gain.cancelScheduledValues(now);
+  v.g.gain.setValueAtTime(v.g.gain.value, now);
+  v.g.gain.linearRampToValueAtTime(0, now + 0.15);
+  v.o.stop(now + 0.2);
+  if (!Object.values(voices).some(x => x.n === v.n)) keyEls[v.n].classList.remove("down");
+}
+function stopAll() { Object.keys(voices).forEach(stopVoice); }
+
+$("kb").addEventListener("pointerdown", e => {
+  const el = e.target.closest("[data-n]"); if (!el) return;
+  startVoice("p" + e.pointerId, +el.dataset.n);
+});
+window.addEventListener("pointerup", e => stopVoice("p" + e.pointerId));
+window.addEventListener("pointercancel", e => stopVoice("p" + e.pointerId));
+window.addEventListener("blur", stopAll);
+document.addEventListener("visibilitychange", () => { if (document.hidden) stopAll(); });
+
+const C4 = 3; // semitones above A4, so the note named C4 in this page's labels
+function setOct(d) {
+  S.oct = Math.max(-4, Math.min(3, S.oct + d));
+  const base = C4 + 12 * S.oct;
+  $("octLabel").textContent = `A plays ${pitchName(base)}`;
+  $("octDown").disabled = S.oct <= -4;
+  $("octUp").disabled = S.oct >= 3;
+  const el = keyEls[base];
+  if (el) $("kbscroll").scrollLeft = el.offsetLeft - 120;
+}
+const KMAP = { a: 0, w: 1, s: 2, e: 3, d: 4, f: 5, t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12 };
+window.addEventListener("keydown", e => {
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (["INPUT", "SELECT", "TEXTAREA"].includes(e.target.tagName)) return;
+  const lk = e.key.toLowerCase();
+  if (lk === "z") { setOct(-1); return; }
+  if (lk === "x") { setOct(1); return; }
+  const m = KMAP[lk]; if (m === undefined) return;
+  startVoice("k" + lk, C4 + 12 * S.oct + m);
+});
+window.addEventListener("keyup", e => stopVoice("k" + e.key.toLowerCase()));
+
+/* ---------- Controls ---------- */
+function seg(id, opts, key, after) {
+  const el = $(id);
+  const draw = () => {
+    el.innerHTML = opts.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${String(S[key]) === String(v)}">${l}</button>`).join("");
+  };
+  el.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const v = b.dataset.v;
+    S[key] = isNaN(v) ? v : Number(v);
+    draw(); after();
+  });
+  draw();
+}
+
+$("key").innerHTML = PN.map(n => `<option${n === S.key ? " selected" : ""}>${n}</option>`).join("");
+$("key").addEventListener("change", e => { S.key = e.target.value; renderChart(); renderDetail(); renderFreq(); markTonic(); });
+$("a4").addEventListener("input", e => {
+  const v = parseFloat(e.target.value);
+  if (v >= 380 && v <= 500) { S.a4 = v; renderDetail(); renderFreq(); }
+});
+
+const svg = $("chart");
+svg.addEventListener("click", e => {
+  const c = e.target.closest(".col"); if (!c) return;
+  S.sel = +c.dataset.i; renderChart(); renderDetail();
+});
+svg.addEventListener("keydown", e => {
+  const c = e.target.closest(".col"); if (!c) return;
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    S.sel = +c.dataset.i; renderChart(); renderDetail();
+    svg.querySelector(`.col[data-i="${S.sel}"]`).focus();
+  }
+});
+$("detail").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "cmp") compareAll();
+  else if (b.dataset.sys) playSystem(b.dataset.sys);
+});
+
+seg("matrixSeg", [["ratio", "Ratios"], ["dec", "Decimals"], ["err", "Error in cents"]], "tab", renderMatrix);
+seg("sysSeg", [["pyth", "Pythagorean"], ["just", "Just"], ["mean", "Meantone"]], "sys", renderFreq);
+seg("rangeSeg", [["oct", "One octave"], ["all", "Full range A0\u2013A8"]], "range", renderFreq);
+seg("harmSeg", [[16, "16 harmonics"], [32, "32"], [64, "64"], [128, "128"]], "harm", renderHarm);
+
+seg("kbSeg", [["pyth", "Pythagorean"], ["just", "Just"], ["mean", "Meantone"], ["equal", "Equal"]], "kb", () => {});
+
+$("octDown").addEventListener("click", () => setOct(-1));
+$("octUp").addEventListener("click", () => setOct(1));
+
+renderChart(); renderDetail(); renderMatrix(); renderFreq(); renderHarm(); buildKeyboard(); setOct(0);
+</script>
+</body>
+</html>
